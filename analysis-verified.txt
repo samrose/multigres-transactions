@@ -25,9 +25,9 @@ This document covers the behavior of PostgreSQL transactions, prepared statement
 When multiple SQL statements are sent in a single query string, PostgreSQL handles them as follows:
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "When a simple Query message contains more than one SQL statement (separated by semicolons), those statements are executed as a single transaction, unless explicit transaction control commands are included to force a different behavior."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "When a simple Query message contains more than one SQL statement (separated by semicolons), those statements are executed as a single transaction, unless explicit transaction control commands are included to force a different behavior."
 
-> **Source (protocol-flow.html):** "This behavior is implemented by running the statements in a multi-statement Query message in an implicit transaction block unless there is some explicit transaction block for them to run in. The main difference between an implicit transaction block and a regular one is that an implicit block is closed automatically at the end of the Query message, either by an implicit commit if there was no error, or an implicit rollback if there was an error."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "This behavior is implemented by running the statements in a multi-statement Query message in an implicit transaction block unless there is some explicit transaction block for them to run in. The main difference between an implicit transaction block and a regular one is that an implicit block is closed automatically at the end of the Query message, either by an implicit commit if there was no error, or an implicit rollback if there was an error."
 
 🔧 **SOURCE ONLY** - Processing Flow (`src/backend/tcop/postgres.c:1088-1157`):
 1. All statements are parsed at once via `pg_parse_query()`
@@ -66,12 +66,12 @@ typedef enum TBlockState
 - **State Flow**: `TBLOCK_STARTED` → `TBLOCK_IMPLICIT_INPROGRESS` → `TBLOCK_STARTED` → `TBLOCK_DEFAULT`
 
 ✅ **DOCUMENTED** - Behavior:
-> **Source (protocol-flow.html):** "The main difference between an implicit transaction block and a regular one is that an implicit block is closed automatically at the end of the Query message, either by an implicit commit if there was no error, or an implicit rollback if there was an error."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "The main difference between an implicit transaction block and a regular one is that an implicit block is closed automatically at the end of the Query message, either by an implicit commit if there was no error, or an implicit rollback if there was an error."
 
 #### Explicit Transaction Block (User-initiated via BEGIN)
 
 ✅ **DOCUMENTED:**
-> **Source (sql-begin.html):** "BEGIN initiates a transaction block, that is, all statements after a BEGIN command will be executed in a single transaction until an explicit COMMIT or ROLLBACK is given."
+> **Source ([sql-begin.html](https://www.postgresql.org/docs/17/sql-begin.html)):** "BEGIN initiates a transaction block, that is, all statements after a BEGIN command will be executed in a single transaction until an explicit COMMIT or ROLLBACK is given."
 
 🔧 **SOURCE ONLY:**
 - **States**: `TBLOCK_BEGIN` → `TBLOCK_INPROGRESS`
@@ -95,7 +95,7 @@ INSERT INTO users VALUES (3, 'Charlie');
 ```
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "When a simple Query message contains more than one SQL statement (separated by semicolons), those statements are executed as a single transaction..."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "When a simple Query message contains more than one SQL statement (separated by semicolons), those statements are executed as a single transaction..."
 
 **What happens**:
 1. PostgreSQL detects 3 statements → creates implicit transaction block
@@ -117,9 +117,9 @@ INSERT INTO users VALUES (3, 'Charlie');    -- Never executed
 ```
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "In the event of an error, ErrorResponse is issued followed by ReadyForQuery. All further processing of the query string is aborted by ErrorResponse (even if more queries remained in it)."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "In the event of an error, ErrorResponse is issued followed by ReadyForQuery. All further processing of the query string is aborted by ErrorResponse (even if more queries remained in it)."
 
-> **Source (protocol-flow.html):** "...either by an implicit commit if there was no error, or an implicit rollback if there was an error."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "...either by an implicit commit if there was no error, or an implicit rollback if there was an error."
 
 **What happens**:
 1. PostgreSQL detects 4 statements → creates implicit transaction block
@@ -149,7 +149,7 @@ COMMIT;
 ⚠️ **CORRECTION**: The original document claimed BEGIN commits the preceding implicit transaction. This is **WRONG**.
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "Conversely, if a `BEGIN` appears in a multi-statement Query message, then it starts a regular transaction block that will only be terminated by an explicit `COMMIT` or `ROLLBACK`, whether that appears in this Query message or a later one. **If the `BEGIN` follows some statements that were executed as an implicit transaction block, those statements are not immediately committed; in effect, they are retroactively included into the new regular transaction block.**"
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "Conversely, if a `BEGIN` appears in a multi-statement Query message, then it starts a regular transaction block that will only be terminated by an explicit `COMMIT` or `ROLLBACK`, whether that appears in this Query message or a later one. **If the `BEGIN` follows some statements that were executed as an implicit transaction block, those statements are not immediately committed; in effect, they are retroactively included into the new regular transaction block.**"
 
 **What actually happens**:
 1. PostgreSQL detects 5 statements → starts implicit transaction block
@@ -180,7 +180,7 @@ COMMIT;                                      -- Never executed
 ⚠️ **CORRECTION**: The original document claimed Alice survives because she was "committed before BEGIN." This is **WRONG**.
 
 ✅ **DOCUMENTED** (same quote as above):
-> **Source (protocol-flow.html):** "If the `BEGIN` follows some statements that were executed as an implicit transaction block, those statements are not immediately committed; in effect, they are retroactively included into the new regular transaction block."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "If the `BEGIN` follows some statements that were executed as an implicit transaction block, those statements are not immediately committed; in effect, they are retroactively included into the new regular transaction block."
 
 **What actually happens**:
 1. INSERT (1, Alice) in implicit transaction
@@ -206,7 +206,7 @@ COMMIT;                                      -- Never executed
 ```
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "Remember that, regardless of any transaction control commands that may be present, execution of the Query message stops at the first error."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "Remember that, regardless of any transaction control commands that may be present, execution of the Query message stops at the first error."
 
 **What happens**:
 1. INSERT (1, Alice) in implicit transaction - succeeds
@@ -271,9 +271,9 @@ COMMIT;
 ### 1.5 Autocommit Behavior
 
 ✅ **DOCUMENTED:**
-> **Source (tutorial-transactions.html):** "PostgreSQL actually treats every SQL statement as being executed within a transaction. If you do not issue a `BEGIN` command, then each individual statement has an implicit `BEGIN` and (if successful) `COMMIT` wrapped around it."
+> **Source ([tutorial-transactions.html](https://www.postgresql.org/docs/17/tutorial-transactions.html)):** "PostgreSQL actually treats every SQL statement as being executed within a transaction. If you do not issue a `BEGIN` command, then each individual statement has an implicit `BEGIN` and (if successful) `COMMIT` wrapped around it."
 
-> **Source (sql-begin.html):** "By default (without BEGIN), PostgreSQL executes transactions in "autocommit" mode, that is, each statement is executed in its own transaction and a commit is implicitly performed at the end of the statement (if execution was successful, otherwise a rollback is done)."
+> **Source ([sql-begin.html](https://www.postgresql.org/docs/17/sql-begin.html)):** "By default (without BEGIN), PostgreSQL executes transactions in "autocommit" mode, that is, each statement is executed in its own transaction and a commit is implicitly performed at the end of the statement (if execution was successful, otherwise a rollback is done)."
 
 🔧 **SOURCE ONLY:**
 - **State flow**: `TBLOCK_DEFAULT` → `TBLOCK_STARTED` → (execute) → `TBLOCK_DEFAULT`
@@ -365,21 +365,21 @@ ROLLBACK;  -- Table creation, insert, and alter are ALL rolled back
 
 | Statement | Documentation Quote | Source |
 |-----------|---------------------|--------|
-| `CREATE DATABASE` | "CREATE DATABASE cannot be executed inside a transaction block." | sql-createdatabase.html |
-| `DROP DATABASE` | "DROP DATABASE cannot be executed inside a transaction block." | sql-dropdatabase.html |
-| `CREATE TABLESPACE` | "CREATE TABLESPACE cannot be executed inside a transaction block." | sql-createtablespace.html |
-| `DROP TABLESPACE` | "DROP TABLESPACE cannot be executed inside a transaction block." | sql-droptablespace.html |
-| `ALTER SYSTEM` | "Also, since this command acts directly on the file system and cannot be rolled back, it is not allowed inside a transaction block or function." | sql-altersystem.html |
-| `CREATE INDEX CONCURRENTLY` | "Another difference is that a regular CREATE INDEX command can be performed within a transaction block, but CREATE INDEX CONCURRENTLY cannot." | sql-createindex.html |
-| `REINDEX CONCURRENTLY` | "Another difference is that a regular REINDEX TABLE or REINDEX INDEX command can be performed within a transaction block, but REINDEX CONCURRENTLY cannot." | sql-reindex.html |
-| `DROP INDEX CONCURRENTLY` | "Also, regular DROP INDEX commands can be performed within a transaction block, but DROP INDEX CONCURRENTLY cannot." | sql-dropindex.html |
-| `VACUUM` | "VACUUM cannot be executed inside a transaction block." | sql-vacuum.html |
-| `CLUSTER` (all tables) | "This form of CLUSTER cannot be executed inside a transaction block." | sql-cluster.html |
-| `CLUSTER` (partitioned) | "CLUSTER on a partitioned table cannot be executed inside a transaction block." | sql-cluster.html |
-| `COMMIT PREPARED` | "This command cannot be executed inside a transaction block." | sql-commit-prepared.html |
-| `ROLLBACK PREPARED` | "This command cannot be executed inside a transaction block." | sql-rollback-prepared.html |
-| `CREATE SUBSCRIPTION` (with slot) | "When creating a replication slot (the default behavior), CREATE SUBSCRIPTION cannot be executed inside a transaction block." | sql-createsubscription.html |
-| `DROP SUBSCRIPTION` (with slot) | "If a subscription is associated with a replication slot, then DROP SUBSCRIPTION cannot be executed inside a transaction block." | sql-dropsubscription.html |
+| `CREATE DATABASE` | "CREATE DATABASE cannot be executed inside a transaction block." | [sql-createdatabase.html](https://www.postgresql.org/docs/17/sql-createdatabase.html) |
+| `DROP DATABASE` | "DROP DATABASE cannot be executed inside a transaction block." | [sql-dropdatabase.html](https://www.postgresql.org/docs/17/sql-dropdatabase.html) |
+| `CREATE TABLESPACE` | "CREATE TABLESPACE cannot be executed inside a transaction block." | [sql-createtablespace.html](https://www.postgresql.org/docs/17/sql-createtablespace.html) |
+| `DROP TABLESPACE` | "DROP TABLESPACE cannot be executed inside a transaction block." | [sql-droptablespace.html](https://www.postgresql.org/docs/17/sql-droptablespace.html) |
+| `ALTER SYSTEM` | "Also, since this command acts directly on the file system and cannot be rolled back, it is not allowed inside a transaction block or function." | [sql-altersystem.html](https://www.postgresql.org/docs/17/sql-altersystem.html) |
+| `CREATE INDEX CONCURRENTLY` | "Another difference is that a regular CREATE INDEX command can be performed within a transaction block, but CREATE INDEX CONCURRENTLY cannot." | [sql-createindex.html](https://www.postgresql.org/docs/17/sql-createindex.html) |
+| `REINDEX CONCURRENTLY` | "Another difference is that a regular REINDEX TABLE or REINDEX INDEX command can be performed within a transaction block, but REINDEX CONCURRENTLY cannot." | [sql-reindex.html](https://www.postgresql.org/docs/17/sql-reindex.html) |
+| `DROP INDEX CONCURRENTLY` | "Also, regular DROP INDEX commands can be performed within a transaction block, but DROP INDEX CONCURRENTLY cannot." | [sql-dropindex.html](https://www.postgresql.org/docs/17/sql-dropindex.html) |
+| `VACUUM` | "VACUUM cannot be executed inside a transaction block." | [sql-vacuum.html](https://www.postgresql.org/docs/17/sql-vacuum.html) |
+| `CLUSTER` (all tables) | "This form of CLUSTER cannot be executed inside a transaction block." | [sql-cluster.html](https://www.postgresql.org/docs/17/sql-cluster.html) |
+| `CLUSTER` (partitioned) | "CLUSTER on a partitioned table cannot be executed inside a transaction block." | [sql-cluster.html](https://www.postgresql.org/docs/17/sql-cluster.html) |
+| `COMMIT PREPARED` | "This command cannot be executed inside a transaction block." | [sql-commit-prepared.html](https://www.postgresql.org/docs/17/sql-commit-prepared.html) |
+| `ROLLBACK PREPARED` | "This command cannot be executed inside a transaction block." | [sql-rollback-prepared.html](https://www.postgresql.org/docs/17/sql-rollback-prepared.html) |
+| `CREATE SUBSCRIPTION` (with slot) | "When creating a replication slot (the default behavior), CREATE SUBSCRIPTION cannot be executed inside a transaction block." | [sql-createsubscription.html](https://www.postgresql.org/docs/17/sql-createsubscription.html) |
+| `DROP SUBSCRIPTION` (with slot) | "If a subscription is associated with a replication slot, then DROP SUBSCRIPTION cannot be executed inside a transaction block." | [sql-dropsubscription.html](https://www.postgresql.org/docs/17/sql-dropsubscription.html) |
 
 🔧 **SOURCE ONLY** - These statements call `PreventInTransactionBlock()` internally.
 
@@ -395,9 +395,9 @@ CREATE DATABASE mydb;  -- ERROR: CREATE DATABASE cannot run inside a transaction
 
 | Statement | Documentation Quote | Source |
 |-----------|---------------------|--------|
-| `LOCK TABLE` | "LOCK TABLE is useless outside a transaction block: the lock would remain held only to the completion of the statement. Therefore PostgreSQL reports an error if LOCK is used outside a transaction block." | sql-lock.html |
-| `DECLARE CURSOR` (non-holdable) | "Unless WITH HOLD is specified, the cursor created by this command can only be used within the current transaction... Therefore PostgreSQL reports an error if such a command is used outside a transaction block." | sql-declare.html |
-| `SAVEPOINT` | "Savepoints can only be established when inside a transaction block." | sql-savepoint.html |
+| `LOCK TABLE` | "LOCK TABLE is useless outside a transaction block: the lock would remain held only to the completion of the statement. Therefore PostgreSQL reports an error if LOCK is used outside a transaction block." | [sql-lock.html](https://www.postgresql.org/docs/17/sql-lock.html) |
+| `DECLARE CURSOR` (non-holdable) | "Unless WITH HOLD is specified, the cursor created by this command can only be used within the current transaction... Therefore PostgreSQL reports an error if such a command is used outside a transaction block." | [sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html) |
+| `SAVEPOINT` | "Savepoints can only be established when inside a transaction block." | [sql-savepoint.html](https://www.postgresql.org/docs/17/sql-savepoint.html) |
 
 🔧 **SOURCE ONLY** - `RELEASE SAVEPOINT` and `ROLLBACK TO SAVEPOINT` also require transaction blocks (via `RequireTransactionBlock()` in source).
 
@@ -467,7 +467,7 @@ For a sharding proxy:
 🔧 **SOURCE ONLY** - A **portal** is an abstraction representing the execution state of a running or runnable query (`src/include/utils/portal.h:115-206`).
 
 ✅ **DOCUMENTED:**
-> **Source (sql-declare.html):** The internal server structure is called a "portal."
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** The internal server structure is called a "portal."
 
 Portals support:
 - SQL-level CURSORs (created with `DECLARE CURSOR`)
@@ -528,7 +528,7 @@ uint64 portalPos;    // row number after fetching
 | **Portal from prior transaction** | Ignored (already held over) |
 
 ✅ **DOCUMENTED:**
-> **Source (sql-declare.html):** "Unless WITH HOLD is specified, the cursor created by this command can only be used within the current transaction."
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** "Unless WITH HOLD is specified, the cursor created by this command can only be used within the current transaction."
 
 🔧 **SOURCE ONLY** - Holdable Cursor Materialization (`HoldPortal()` at line 636-662):
 1. Results dumped into tuplestore
@@ -556,7 +556,7 @@ uint64 portalPos;    // row number after fetching
 **Yes, but with restrictions:**
 
 ✅ **DOCUMENTED:**
-> **Source (sql-declare.html):** "Unless WITH HOLD is specified, the cursor created by this command can only be used within the current transaction... Therefore PostgreSQL reports an error if such a command is used outside a transaction block."
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** "Unless WITH HOLD is specified, the cursor created by this command can only be used within the current transaction... Therefore PostgreSQL reports an error if such a command is used outside a transaction block."
 
 🔧 **SOURCE ONLY** - Constraint (`src/backend/commands/portalcmds.c:63-68`):
 - Non-holdable cursors **MUST** be declared within an explicit transaction block
@@ -581,13 +581,13 @@ END
 
 ✅ **DOCUMENTED:**
 
-> **Source (sql-declare.html):** "WITH HOLD specifies that the cursor can continue to be used after the transaction that created it successfully commits."
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** "WITH HOLD specifies that the cursor can continue to be used after the transaction that created it successfully commits."
 
-> **Source (sql-declare.html):** "If WITH HOLD is specified and the transaction that created the cursor successfully commits, the cursor can continue to be accessed by subsequent transactions in the same session. (But if the creating transaction is aborted, the cursor is removed.)"
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** "If WITH HOLD is specified and the transaction that created the cursor successfully commits, the cursor can continue to be accessed by subsequent transactions in the same session. (But if the creating transaction is aborted, the cursor is removed.)"
 
-> **Source (sql-declare.html):** "In the current implementation, the rows represented by a held cursor are copied into a temporary file or memory area so that they remain available for subsequent transactions."
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** "In the current implementation, the rows represented by a held cursor are copied into a temporary file or memory area so that they remain available for subsequent transactions."
 
-> **Source (sql-declare.html):** "WITH HOLD may not be specified when the query includes FOR UPDATE or FOR SHARE."
+> **Source ([sql-declare.html](https://www.postgresql.org/docs/17/sql-declare.html)):** "WITH HOLD may not be specified when the query includes FOR UPDATE or FOR SHARE."
 
 | Aspect | Regular Cursor | WITH HOLD Cursor |
 |--------|----------------|------------------|
@@ -601,7 +601,7 @@ END
 ### 2.8 Cursors and Savepoints
 
 ✅ **DOCUMENTED:**
-> **Source (sql-rollback-to.html):** "Cursors have somewhat non-transactional behavior with respect to savepoints. Any cursor that is opened inside a savepoint will be closed when the savepoint is rolled back. If a previously opened cursor is affected by a FETCH or MOVE command inside a savepoint that is later rolled back, the cursor remains at the position that FETCH left it pointing to (that is, the cursor motion caused by FETCH is not rolled back)."
+> **Source ([sql-rollback-to.html](https://www.postgresql.org/docs/17/sql-rollback-to.html)):** "Cursors have somewhat non-transactional behavior with respect to savepoints. Any cursor that is opened inside a savepoint will be closed when the savepoint is rolled back. If a previously opened cursor is affected by a FETCH or MOVE command inside a savepoint that is later rolled back, the cursor remains at the position that FETCH left it pointing to (that is, the cursor motion caused by FETCH is not rolled back)."
 
 ---
 
@@ -635,7 +635,7 @@ END
 ### 3.2 Prepared Statements and Transactions
 
 ✅ **DOCUMENTED:**
-> **Source (sql-prepare.html):** "Prepared statements only last for the duration of the current database session. When the session ends, the prepared statement is forgotten, so it must be recreated before being used again."
+> **Source ([sql-prepare.html](https://www.postgresql.org/docs/17/sql-prepare.html)):** "Prepared statements only last for the duration of the current database session. When the session ends, the prepared statement is forgotten, so it must be recreated before being used again."
 
 **Key distinction**:
 - **Prepared statements** (in hash table): **Survive transactions** (implied by "session duration")
@@ -657,11 +657,11 @@ For Extended Query Protocol:
 
 ✅ **DOCUMENTED:**
 
-> **Source (protocol-flow.html):** "In the extended protocol, the frontend first sends a Parse message, which contains a textual query string, optionally some information about data types of parameter placeholders, and the name of a destination prepared-statement object..."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "In the extended protocol, the frontend first sends a Parse message, which contains a textual query string, optionally some information about data types of parameter placeholders, and the name of a destination prepared-statement object..."
 
-> **Source (protocol-flow.html):** "Once a prepared statement exists, it can be readied for execution using a Bind message..."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "Once a prepared statement exists, it can be readied for execution using a Bind message..."
 
-> **Source (protocol-flow.html):** "Once a portal exists, it can be executed using an Execute message..."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "Once a portal exists, it can be executed using an Execute message..."
 
 **Simple Query Protocol**:
 ```
@@ -691,7 +691,7 @@ Server: ReadyForQuery
 - Transaction spans until Sync
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "At completion of each series of extended-query messages, the frontend should issue a Sync message. This parameterless message causes the backend to close the current transaction if it's not inside a BEGIN/COMMIT transaction block ("close" meaning to commit if no error, or roll back if error)."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "At completion of each series of extended-query messages, the frontend should issue a Sync message. This parameterless message causes the backend to close the current transaction if it's not inside a BEGIN/COMMIT transaction block ("close" meaning to commit if no error, or roll back if error)."
 
 **Key Differences**:
 
@@ -737,7 +737,7 @@ What happens when a client switches between protocols mid-stream? This is import
 #### Key Distinction: Named vs Unnamed Resources
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "If successfully created, a named portal object lasts till the end of the current transaction, unless explicitly destroyed. An unnamed portal is destroyed at the end of the transaction, or as soon as the next Bind statement specifying the unnamed portal as destination is issued."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "If successfully created, a named portal object lasts till the end of the current transaction, unless explicitly destroyed. An unnamed portal is destroyed at the end of the transaction, or as soon as the next Bind statement specifying the unnamed portal as destination is issued."
 
 🔧 **SOURCE ONLY** - Behavior on simple Query arrival:
 
@@ -888,7 +888,7 @@ ErrorResponse
 ```
 
 ✅ **DOCUMENTED:**
-> **Source (protocol-flow.html):** "The purpose of Sync is to provide a resynchronization point for error recovery. When an error is detected while processing any extended-query message, the backend issues ErrorResponse, then reads and discards messages until a Sync is reached, then issues ReadyForQuery and returns to normal message processing."
+> **Source ([protocol-flow.html](https://www.postgresql.org/docs/17/protocol-flow.html)):** "The purpose of Sync is to provide a resynchronization point for error recovery. When an error is detected while processing any extended-query message, the backend issues ErrorResponse, then reads and discards messages until a Sync is reached, then issues ReadyForQuery and returns to normal message processing."
 
 🔧 **SOURCE ONLY** - What happens (`src/backend/tcop/postgres.c:4516-4517`):
 1. `ignore_till_sync = true` is set
